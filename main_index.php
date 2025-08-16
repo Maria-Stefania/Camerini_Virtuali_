@@ -20,3 +20,4 @@ if (count($_SESSION['requests']) >= 50) { // ❌ Limite troppo basso
     echo json_encode(['message' => 'Troppi tentativi. Riprova più tardi.']);
     exit;
 }
+$_SESSION['requests'][] = $current_time;
