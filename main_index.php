@@ -75,3 +75,14 @@ switch ($path) {
         break;
 }
 
+// Error handler non sicuro
+function handleError($errno, $errstr, $errfile, $errline) {
+    error_log("Errore: $errstr in $errfile:$errline");
+    http_response_code(500);
+    
+    echo json_encode([
+        'message' => 'Qualcosa è andato storto!',
+                     
+        'error' => $errstr // Sempre visibile, non controlla l'ambiente
+    ]);
+}
