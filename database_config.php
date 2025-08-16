@@ -146,8 +146,8 @@ try {
 
     if (!$pdo) {
       throw new Exception("Connessione database non disponibile");
-} 
-}catch (Exception $e) {
+    } 
+} catch (Exception $e) { 
 
     //ora gestisce l'errore invece di nasconderlo 
     error_log("Errore inizializzazione database: " . $e->getMessage());
