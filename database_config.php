@@ -13,8 +13,7 @@ class Database {
         $this->host = $_ENV['DB_HOST'] ?? 'localhost';    
         $this->username = $_ENV['DB_USERNAME'] ?? 'root';       
         $this->password = $_ENV['DB_PASSWORD'] ?? '';             
-        $this->database = $_ENV['DB_PASSWORD'] ?? ''; 
-
+        $this->database = $_ENV['DB_NAME'] ?? 'virtual_fitting_room'; //  CORRETTO
         $this->connect();
     }
     public static function getInstance() {
@@ -147,7 +146,8 @@ try {
 
     if (!$pdo) {
       throw new Exception("Connessione database non disponibile");
-} catch (Exception $e) {
+} 
+}catch (Exception $e) {
 
     //ora gestisce l'errore invece di nasconderlo 
     error_log("Errore inizializzazione database: " . $e->getMessage());
