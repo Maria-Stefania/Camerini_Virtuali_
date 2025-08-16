@@ -100,14 +100,14 @@ class Auth {
         ]);
 
         /**
-         * ERRORE #6: Encoding base64 non sicuro per URL
+         * ERRORE: Encoding base64 non sicuro per URL
          * Caratteri +/= possono creare problemi negli URL
          */
         $base64Header = base64_encode($header); // ❌ Non URL-safe
         $base64Payload = base64_encode($payload); // ❌ Non URL-safe
 
         /**
-         * ERRORE #7: Secret key hardcoded e debole
+         * ERRORE: Secret key hardcoded e debole
          * Mai mettere chiavi segrete nel codice!
          */
         $secret = 'mysecret123'; // ❌ Hardcoded e debole!
@@ -177,15 +177,9 @@ class Auth {
 
     // MIDDLEWARE DI AUTENTICAZIONE
 
-    /**
-     * Ottiene l'utente corrente dal token
-     * ERRORE #17: Implementazione middleware incompleta
-     */
+    
     public function getCurrentUser() {
-        /**
-         * ERRORE #18: Gestione headers non robusta
-         * Non considera case sensitivity e varianti browser
-         */
+        
         $headers = getallheaders();
         $authHeader = $headers['Authorization']; //  Può non esistere, causa errore
 
