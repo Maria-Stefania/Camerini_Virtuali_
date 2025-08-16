@@ -15,5 +15,15 @@ class Database {
         $this->password = '';             
         $this->database = 'virtual_fitting_room'; 
     }
+    public static function getInstance() {
+        
+        if ($this->instance === null) {  
+            $this->instance = new Database();  
+        }
+        return $this->instance;  
+    }
     
-    /**
+    
+    
+    
+    
