@@ -1,28 +1,29 @@
-RewriteEngine on
+RewriteEngine On
 
 # Security headers
-Header set X-Content-Type-Options "nosniff"
+Header always set X-Content-Type-Options "nosniff"
 Header always set X-Frame-Options "SAMEORIGIN"
 Header always set X-XSS-Protection "1; mode=block"
-Header set Referrer-Policy "strict-origin-when-cross-origin"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
 
 # CORS headers for API requests
 Header always set Access-Control-Allow-Origin "*"
-Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE"
-Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
 
 # Handle preflight requests
 RewriteCond %{REQUEST_METHOD} OPTIONS
-RewriteRule ^(.*)$ $1 [L]
+RewriteRule ^(.*)$ $1 [R=200,L]
 
 # Protect sensitive files
 <FilesMatch "\.(env|config|log)$">
+    Order allow,deny
     Deny from all
 </FilesMatch>
 
 # Redirect API routes to index.php
 RewriteCond %{REQUEST_URI} ^/api/
-RewriteRule ^(.*)$ index.php [L]
+RewriteRule ^(.*)$ index.php [QSA,L]
 
 # Static file serving for uploads
 RewriteCond %{REQUEST_URI} ^/uploads/
@@ -32,7 +33,7 @@ RewriteRule ^ - [L]
 # Main routing - redirect everything else to index.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php [QSA]
+RewriteRule ^(.*)$ index.php [QSA,L]
 
 # Cache static assets
 <IfModule mod_expires.c>
@@ -53,7 +54,7 @@ RewriteRule ^(.*)$ index.php [QSA]
 </IfModule>
 
 # File upload limit
-php_value upload_max_filesize 20M
-php_value post_max_size 15M
-php_value max_execution_time 200
-php_value max_input_time 200
+php_value upload_max_filesize 10M
+php_value post_max_size 10M
+php_value max_execution_time 300
+php_value max_input_time 300
