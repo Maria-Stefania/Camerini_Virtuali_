@@ -117,10 +117,11 @@ switch ($path) {
             'method' => $method
         ]);
         break;
-
+}
 // Error handler personalizzato per gestire tutti gli errori PHP
 function handleError($errno, $errstr, $errfile, $errline) {
-    http_response_code(500); // Internal Server Error
+    if (!headers_sent()) { //  Controllo sicurezza
+        http_response_code(500); // Internal Server Error
         
         /**
          * Risposta JSON diversa basata sull'ambiente:
