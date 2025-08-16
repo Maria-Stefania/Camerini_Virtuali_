@@ -12,3 +12,5 @@ $method = $_SERVER['REQUEST_METHOD'];
 if (!isset($_SESSION['requests'])) {
     $_SESSION['requests'] = [];
 }
+
+$current_time = time();
