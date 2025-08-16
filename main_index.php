@@ -86,3 +86,8 @@ function handleError($errno, $errstr, $errfile, $errline) {
         'error' => $errstr // Sempre visibile, non controlla l'ambiente
     ]);
 }
+
+ //Registrazione dell'error handler 
+set_error_handler('handleError');
+
+?>
