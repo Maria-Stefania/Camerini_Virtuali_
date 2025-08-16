@@ -8,3 +8,12 @@ class Database {
     private $username;
     private $password;
     private $databas
+
+    private function __construct() {
+        $this->host = 'localhost';    
+        $this->username = 'root';       
+        $this->password = '';             
+        $this->database = 'virtual_fitting_room'; 
+    }
+    
+    /**
