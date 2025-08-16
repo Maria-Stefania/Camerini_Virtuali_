@@ -14,3 +14,9 @@ if (!isset($_SESSION['requests'])) {
 }
 
 $current_time = time();
+
+if (count($_SESSION['requests']) >= 50) { // ❌ Limite troppo basso
+    http_response_code(429);
+    echo json_encode(['message' => 'Troppi tentativi. Riprova più tardi.']);
+    exit;
+}
