@@ -1,26 +1,28 @@
 <?php
 class Database {
   
-    private $instance = null;  
+    private static $instance = null;  //aggiunto static
     private $connection;
     // Configurazioni database
     private $host;
     private $username;
     private $password;
-    private $databas
+    private $database;
 
     private function __construct() {
-        $this->host = 'localhost';    
-        $this->username = 'root';       
-        $this->password = '';             
-        $this->database = 'virtual_fitting_room'; 
+        $this->host = $_ENV['DB_HOST'] ?? 'localhost';    
+        $this->username = $_ENV['DB_USERNAME'] ?? 'root';       
+        $this->password = $_ENV['DB_PASSWORD'] ?? '';             
+        $this->database = $_ENV['DB_PASSWORD'] ?? ''; 
+
+        $this->connect();
     }
     public static function getInstance() {
         
-        if ($this->instance === null) {  
-            $this->instance = new Database();  
+        if (self::$instance === null) {  
+            self::$instance = new Database();  
         }
-        return $this->instance;  
+        return self::$instance;  
     }
     private function connect() {
         try {
@@ -33,7 +35,7 @@ class Database {
             $options = [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-               
+                PDO::ATTR_EMULATE_PREPARES => false, //  AGGIUNTO: Sicurezza SQL injection  
             ];
             
             /**
@@ -41,14 +43,14 @@ class Database {
              */
             $this->connection = new PDO($dsn, $this->username, $this->password, $options);
             
-            
+            $this->createTables(); // AGGIUNTO: essenziale per funzionamento
+
             
         } catch (PDOException $e) {
             
              // Gestione errori di connessione
             
-            error_log("Errore connessione database: " . $e->getMessage()); // ❌ Troppo dettagliato
-            
+            error_log("Errore connessione database: " . $e->getMessage()); 
             die("Errore di connessione al database");
         }
     }
@@ -83,14 +85,11 @@ class Database {
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             )",
             
-            /**
-             * ERRORE #9: Tabella prodotti con ENUM limitato
-             * L'ENUM è troppo rigido, difficile da estendere
-             */
+            
             "CREATE TABLE IF NOT EXISTS products (
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 nome VARCHAR(255) NOT NULL,
-                categoria ENUM('magliette', 'pantaloni') NOT NULL, 
+                categoria ENUM('magliette', 'camicie', 'pantaloni', 'gonne', 'giacche', 'vestiti', 'accessori') NOT NULL, -- ✅ ESTESO
                 marca VARCHAR(100) NOT NULL,
                 descrizione TEXT NOT NULL,
                 prezzo DECIMAL(10,2) NOT NULL,
@@ -103,6 +102,7 @@ class Database {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             )",
+
             
             
             "CREATE TABLE IF NOT EXISTS fitting_sessions (
@@ -116,8 +116,8 @@ class Database {
                 durata INT DEFAULT 0,
                 completata BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-               
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (utente_id) REFERENCES users(id) ON DELETE CASCADE -- ✅ AGGIUNTO: Foreign Key
             )"
         ];
         
@@ -125,12 +125,12 @@ class Database {
          * Esecuzione delle query di creazione tabelle
          * ERRORE #11: Manca gestione errori specifica per ogni tabella
          */
-        foreach ($queries as $query) {
+        foreach ($queries as $i => $query) {
             try {
                 $this->connection->exec($query);
             } catch (PDOException $e) {
-                
-                error_log("Errore creazione tabella: " . $e->getMessage());
+                //log più specifico
+                error_log("Errore creazione tabella #$i: " . $e->getMessage());
             }
         }
     }
@@ -144,7 +144,14 @@ class Database {
 try {
     $db = Database::getInstance();
     $pdo = $db->getConnection();
+
+    if (!$pdo) {
+      throw new Exception("Connessione database non disponibile");
 } catch (Exception $e) {
+
+    //ora gestisce l'errore invece di nasconderlo 
+    error_log("Errore inizializzazione database: " . $e->getMessage());
+    die("Impossibile inizializzare il database. Controlla la configurazione.");
 
 }
 
