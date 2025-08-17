@@ -9,14 +9,14 @@ services:
       - ./:/var/www/html
       - ./uploads:/var/www/html/uploads
     environment:
-      - DB_HOST=localhost
+      - DB_HOST=localhost 
       - DB_NAME=virtual_fitting_room
       - DB_USERNAME=root
       - DB_PASSWORD=rootpassword
       - JWT_SECRET=supersecretjwtkey
       - ENVIRONMENT=development
     depends_on:
-      - database 
+      - mysql 
     command: >
       bash -c "
       apt-get update &&
