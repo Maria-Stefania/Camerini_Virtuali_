@@ -1,0 +1,60 @@
+version: "3.9"
+services:
+  web:
+    image: php:8.2-apache
+    container_name: virtual-fitting-web
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+      - ./uploads:/var/www/html/uploads
+    environment:
+      - DB_HOST=localhost
+      - DB_NAME=virtual_fitting_room
+      - DB_USERNAME=root
+      - DB_PASSWORD=rootpassword
+      - JWT_SECRET=supersecretjwtkey
+      - ENVIRONMENT=development
+    depends_on:
+      - database 
+    command: >
+      bash -c "
+      apt-get update &&
+      apt-get install -y libpng-dev libjpeg-dev libfreetype6-dev libzip-dev &&
+      docker-php-ext-configure gd --with-freetype --with-jpeg &&
+      docker-php-ext-install gd zip pdo pdo_mysql &&
+      a2enmod rewrite &&
+      apache2-foreground
+      "
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.0
+    container_name: virtual-fitting-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=virtual_fitting_room
+      - MYSQL_USER=appuser
+      - MYSQL_PASSWORD=apppassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: virtual-fitting-phpmyadmin
+    environment:
+      - PMA_HOST=mysql
+      - PMA_USER=root
+      - PMA_PASSWORD=rootpassword
+    ports:
+      - "8081:80"
+    depends_on:
+      - mysql
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
