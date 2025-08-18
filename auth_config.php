@@ -11,9 +11,10 @@ class Auth {
      // Costruttore della classe Auth
      
     public function __construct() {
-       
+        $this->db = Database::getInstance()->getConnection();
     }
 
+    
     // GESTIONE JWT TOKENS
 
     // Genera un token JWT per l'utente
