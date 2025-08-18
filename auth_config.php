@@ -101,12 +101,113 @@ class Auth {
     // ==========================================
     // GESTIONE PASSWORD MODERNA E SICURA
 
+        
+     // Hashing password con algoritmo moderno
+     
+    public function hashPassword($password) {
+        /**
+         * password_hash con PASSWORD_DEFAULT usa algoritmi moderni:
+         * - Attualmente bcrypt
+         * - Salt automatico
+         * - Resistente a rainbow tables
+         * - Aggiornabile automaticamente
+         */
+        return password_hash($password, PASSWORD_DEFAULT);
+    }
 
+    
+     // Verifica password sicura
+     
+    public function verifyPassword($password, $hash) {
+        /**
+         * password_verify():
+         * - Compatibile con password_hash()
+         * - Resistente a timing attacks
+         * - Gestisce automaticamente salt e algoritmi
+         */
+        return password_verify($password, $hash);
+    }
 
+    // MIDDLEWARE DI AUTENTICAZIONE SICURO
 
-
-
-
-
+    
+     // Ottiene utente corrente in modo sicuro
+     
+    public function getCurrentUser() {
+        
+      
+         // Gestione headers robusta con fallback
+         
+        $headers = getallheaders();
+        $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
 
         
+         // Parsing header sicuro con controlli
+         
+        if (!$authHeader || !str_starts_with($authHeader, 'Bearer ')) {
+            return null;
+        }
+        
+        $token = substr($authHeader, 7); // Rimuove "Bearer "
+        $payload = $this->verifyToken($token);
+
+        
+         // Aggiunto il controllo validità payload
+         
+        if (!$payload) return null;
+
+        
+         // Query sicura con prepared statements
+         
+        $stmt = $this->db->prepare("SELECT id, email, nome, cognome, foto, preferenze FROM users WHERE id = ?");
+        $stmt->execute([$payload['userId']]);
+
+        return $stmt->fetch();
+    }
+
+    
+     // (aggiustato) Middleware con gestione errori REST standard
+     
+    public function requireAuth() {
+        $user = $this->getCurrentUser();
+        
+        if (!$user) {
+            
+             // Risposta HTTP standard con JSON
+             
+            http_response_code(401);
+            echo json_encode(['message' => 'Token di accesso non fornito o non valido']);
+            exit;
+        }
+        
+        return $user;
+    }
+}
+
+// ISTANZA GLOBALE SICURA
+
+
+ //: Inizializzazione con gestione errori
+ 
+try {
+    $auth = new Auth();
+} catch (Exception $e) {
+    error_log("Errore inizializzazione Auth: " . $e->getMessage());
+    die("Sistema di autenticazione non disponibile");
+}
+
+
+ // Funzione helper con documentazione
+ 
+function requireAuth() {
+    global $auth;
+    if (!$auth) {
+        http_response_code(500);
+        echo json_encode(['message' => 'Sistema di autenticazione non inizializzato']);
+        exit;
+    }
+    return $auth->requireAuth();
+}
+
+?>
+
