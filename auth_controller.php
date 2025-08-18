@@ -65,4 +65,33 @@ try {
     $token = $auth->generateToken($userId); 
 
      // Risposta include dati sensibili
+
+     http_response_code(201);
+    echo json_encode([
+        'message' => 'Utente registrato con successo',
+        'token' => $token,
+        'user' => [
+            'id' => $userId,        
+            'email' => $email,
+            'nome' => $nome,
+            'cognome' => $cognome,
+            'password' => $hashedPassword 
+        ]
+    ]);
+
+} catch (Exception $e) {
+    
+     // Gestione errori che espone informazioni sensibili
      
+    error_log('Errore registrazione: ' . $e->getMessage()); // ❌ OK per il log
+    
+//risposta da rivedere     
+    http_response_code(500);
+    echo json_encode([
+        'message' => 'Errore durante la registrazione',
+        'error' => $e->getMessage(), // ❌ Espone dettagli interni!
+        'trace' => $e->getTraceAsString() // ❌ GRAVE: Espone stack trace!
+    ]);
+}
+
+?>
