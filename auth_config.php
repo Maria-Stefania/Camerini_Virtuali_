@@ -2,7 +2,8 @@
 
 // Classe per gestire autenticazione JWT e sicurezza
  // Gestisce token generation, validation e middleware
- 
+
+require_once 'database.php';
 class Auth {
     
     private $db; 
