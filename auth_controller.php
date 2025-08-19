@@ -17,59 +17,52 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // GESTIONE REGISTRAZIONE SICURA
-
 try {
-     // Lettura input non sicura
-     
+     // Lettura e validazione input JSON
     $input = json_decode(file_get_contents('php://input'), true);
-  
-     // Validazione email insufficiente
-     
-    $email = $input['email'] ?? ''; 
+
+    if ($input === null) {
+        http_response_code(400);
+        echo json_encode(['message' => 'Dati JSON non validi']);
+        exit;
+    }
+     // Validazione email robustacon filtri PHP  
+    $email = filter_var($input['email'] ?? '', FILTER_VALIDATE_EMAIL);
     $password = $input['password'] ?? '';
-    $nome = $input['nome'] ?? '';
-    $cognome = $input['cognome'] ?? '';
+    $nome = trim($input['nome'] ?? ''); // ✅ AGGIUNTO: trim per pulizia
+    $cognome = trim($input['cognome'] ?? ''); // ✅ AGGIUNTO: trim per pulizia
 
-    // VALIDAZIONI DATI - INCOMPLETE!
-
-     // Validazioni troppo permissive
-     
-    if (empty($email)) { 
+     // Validazione email con messaggio specifico
+    if (!$email) {
         http_response_code(400);
-        echo json_encode(['message' => 'Email richiesta']);
+        echo json_encode(['message' => 'Email non valida']);
         exit;
     }
 
-     
-    if (empty($password)) { 
+     // Validazione password con requisiti di sicurezza
+    if (strlen($password) < 6) {
         http_response_code(400);
-        echo json_encode(['message' => 'Password richiesta']);
+        echo json_encode(['message' => 'La password deve essere di almeno 6 caratteri']);
         exit;
     }
 
-    if (empty($nome)) { 
+     // Validazione nome/cognome con trim e controlli
+    if (empty($nome) || empty($cognome)) {
         http_response_code(400);
-        echo json_encode(['message' => 'Nome richiesto']);
+        echo json_encode(['message' => 'Nome e cognome sono richiesti']);
         exit;
     }
-
-    if (empty($cognome)) { 
-        http_response_code(400);
-        echo json_encode(['message' => 'Cognome richiesto']);
-        exit;
-    }
-
-    // CONTROLLO UTENTE ESISTENTE
+    // CONTROLLO UTENTE ESISTENTE SICURO
+    // CORRETTO: Query sicura con prepared statements
+    $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+    $stmt->execute([$email]);
     
-    $checkQuery = "SELECT id FROM users WHERE email = '$email'"; 
-    $result = $pdo->query($checkQuery);
-    
-    if ($result->fetch()) {
+    if ($stmt->fetch()) {
         http_response_code(400);
         echo json_encode(['message' => 'Email già registrata']);
         exit;
     }
-
+    
     // HASHING PASSWORD
     
     $hashedPassword = md5($password); 
