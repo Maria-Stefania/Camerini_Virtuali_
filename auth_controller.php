@@ -29,8 +29,8 @@ try {
      // Validazione email robustacon filtri PHP  
     $email = filter_var($input['email'] ?? '', FILTER_VALIDATE_EMAIL);
     $password = $input['password'] ?? '';
-    $nome = trim($input['nome'] ?? ''); // ✅ AGGIUNTO: trim per pulizia
-    $cognome = trim($input['cognome'] ?? ''); // ✅ AGGIUNTO: trim per pulizia
+    $nome = trim($input['nome'] ?? ''); //  AGGIUNTO: trim per pulizia
+    $cognome = trim($input['cognome'] ?? ''); //  AGGIUNTO: trim per pulizia
 
      // Validazione email con messaggio specifico
     if (!$email) {
@@ -65,45 +65,64 @@ try {
     
     // HASHING PASSWORD
     
-    $hashedPassword = md5($password); 
-    $insertQuery = "INSERT INTO users (email, password, nome, cognome) 
-                    VALUES ('$email', '$hashedPassword', '$nome', '$cognome')"; 
-    
-    $pdo->exec($insertQuery);
+     // Hashing password con algoritmo moderno
+    $hashedPassword = $auth->hashPassword($password);
 
+    // INSERIMENTO UTENTE SICURO:
     
+     // Inserimento con prepared statements
+    $stmt = $pdo->prepare("INSERT INTO users (email, password, nome, cognome) VALUES (?, ?, ?, ?)");
+    $stmt->execute([$email, $hashedPassword, $nome, $cognome]);
+
+    // Controllo successo inserimento
     $userId = $pdo->lastInsertId();
+    
+    if (!$userId) {
+        throw new Exception("Errore durante la creazione dell'utente");
+    }
 
-    $token = $auth->generateToken($userId); 
+    // GENERAZIONE TOKEN SICURA : 
 
-     // Risposta include dati sensibili
+     // Generazione token con controllo esistenza Auth
+    if (!isset($auth)) {
+        throw new Exception("Sistema di autenticazione non disponibile");
+    }
+    
+    $token = $auth->generateToken($userId);
 
-     http_response_code(201);
+    // RISPOSTA SICURA E PULITA
+
+    // Risposta senza informazioni sensibili : 
+    http_response_code(201);
     echo json_encode([
         'message' => 'Utente registrato con successo',
         'token' => $token,
         'user' => [
-            'id' => $userId,        
+            //  RIMOSSO: 'id' => $userId (informazione interna)
             'email' => $email,
             'nome' => $nome,
-            'cognome' => $cognome,
-            'password' => $hashedPassword 
+            'cognome' => $cognome
+            //  RIMOSSO: 'password' => $hashedPassword (GRAVISSIMO errore sicurezza!)
         ]
     ]);
 
+} catch (PDOException $e) {
+    
+     // Gestione specifica errori database
+    error_log('Errore database registrazione: ' . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['message' => 'Errore durante la registrazione']);
+
 } catch (Exception $e) {
     
-     // Gestione errori che espone informazioni sensibili
-     
-    error_log('Errore registrazione: ' . $e->getMessage()); // ❌ OK per il log
-    
-//risposta da rivedere     
+     // Gestione errori sicura senza info leakage
+    error_log('Errore registrazione: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode([
-        'message' => 'Errore durante la registrazione',
-        'error' => $e->getMessage(), // ❌ Espone dettagli interni!
-        'trace' => $e->getTraceAsString() // ❌ GRAVE: Espone stack trace!
+        'message' => 'Errore durante la registrazione'
+        //  RIMOSSO: 'error' => $e->getMessage() (info disclosure)
+        //  RIMOSSO: 'trace' => $e->getTraceAsString() (GRAVE info leak)
     ]);
 }
-
+    
 ?>
