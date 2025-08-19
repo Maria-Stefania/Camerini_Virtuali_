@@ -1,4 +1,23 @@
 <?php
+
+
+// CORRETTO: Headers per API REST JSON
+header('Content-Type: application/json');
+
+// Inclusioni necessarie per funzionamento
+require_once '../../config/database.php';
+require_once '../../config/auth.php';
+
+// VALIDAZIONE METODO HTTP SICURA
+// CORRETTO: Controllo metodo HTTP obbligatorio
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['message' => 'Metodo non consentito']);
+    exit;
+}
+
+// GESTIONE REGISTRAZIONE SICURA
+
 try {
      // Lettura input non sicura
      
