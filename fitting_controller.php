@@ -1,5 +1,5 @@
 <?php
-header('Content-type: application/json'); 
+header('Content-Type: application/json'); 
 
 require_once '../../config/database.php'; 
 require_once '../../config/auth.php';
@@ -8,7 +8,7 @@ $user = requireAuth();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { 
     http_response_code(405);
-    echo json_encode(['messaggio' => 'Metodo non consentito']); 
+    echo json_encode(['message' => 'Metodo non consentito']); 
     exit;
 }
 
@@ -25,7 +25,7 @@ try {
     $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']; 
     if (!in_array($file['type'], $allowedTypes)) { 
         http_response_code(400);
-        echo json_encode(['message' => 'Formato file non supportato. Usa JPG o PNG']]);
+        echo json_encode(['message' => 'Formato file non supportato. Usa JPG o PNG']);
         exit;
     }
     
@@ -52,10 +52,10 @@ try {
     
     $note = $_POST['note'] ?? '';
     
-    $$stmt = $pdo->prepare("INSERT INTO fitting_sessions (utente_id, foto_utente, note) VALUES (?, ?, ?)");
+    $stmt = $pdo->prepare("INSERT INTO fitting_sessions (utente_id, foto_utente, note) VALUES (?, ?, ?)");
     $stmt->execute([$user['id'], $fileName, $note]);
     
-    $sessionId = $pdo->lastInsertID(); 
+    $sessionId = $pdo->lastInsertId(); 
 
     http_response_code(201);
     //  Codice corretto per "risorsa creata"
