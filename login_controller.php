@@ -31,40 +31,42 @@ try {
         exit;
     }
     
-    $stmt = $pdo->prepare("SELECT id, email, password, nome, cognome FROM users WHERE mail = ?");
-    // ❌ Colonna inesistente
+    //  Cerca utente nel database
+    $stmt = $pdo->prepare("SELECT id, email, password, nome, cognome, foto FROM users WHERE email = ?");
     $stmt->execute([$email]);
     $user = $stmt->fetch();
     
     if (!$user) {
         http_response_code(401);
-        echo json_encode(['message' => 'Login fallito']); 
+        echo json_encode(['message' => 'Credenziali non valide']);
         exit;
     }
     
-    if (!$auth->verifyPassword($password, $user['pwd'])) { 
+    if (!$auth->verifyPassword($password, $user['password'])) {
         http_response_code(401);
-        echo json_encode(['message' => 'Password errata']); 
+        echo json_encode(['message' => 'Credenziali non valide']);
         exit;
     }
     
-    $token = $auth->generateToken($user['ID']); 
+        //  Genera token per sessione
+    $token = $auth->generateToken($user['id']);
     
+    //  Risposta JSON coerente
     echo json_encode([
-        'msg' => 'Login ok', 
+        'message' => 'Login effettuato con successo',
         'token' => $token,
         'user' => [
-            'id' => $user['id'] ?? null,
-            'email' => $user['email'] ?? '',
-            'nome' => $user['nome'] ?? '',
-            'cognome' => $user['cognome'] ?? '',
-            'foto' => $user['foto'] ?? null 
+            'id' => $user['id'],
+            'email' => $user['email'],
+            'nome' => $user['nome'],
+            'cognome' => $user['cognome'],
+            'foto' => $user['foto']
         ]
     ]);
     
 } catch (Exception $e) {
     error_log('Errore login ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['message' => 'Errore interno']);
+    echo json_encode(['message' => 'Errore durante il login']);
 }
 ?>
