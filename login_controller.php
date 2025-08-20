@@ -1,13 +1,19 @@
 <?php
-header('Content-type: text/json'); 
-require_once '../../config/database.php';
-require_once '../../config/auth.php';
 
-if ($_SERVER['REQUEST_METHOD'] != 'POST') { 
+header('Content-Type: application/json'); 
+//  Intestazione corretta: dice al client che la risposta è JSON
+
+require_once '../../config/database.php'; 
+require_once '../../config/auth.php';
+//  Inclusione della configurazione database e autenticazione
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') { 
+    //  Controllo rigoroso: accetta solo metodo POST
     http_response_code(405);
-    echo json_encode(['messaggio' => 'Metodo non consentito']); 
+    echo json_encode(['message' => 'Metodo non consentito']);
     exit;
 }
+
 try {
     $input = json_decode(file_get_contents('php://input')); // ❌ 
     
