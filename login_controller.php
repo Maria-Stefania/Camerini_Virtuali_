@@ -15,14 +15,19 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 try {
-    $input = json_decode(file_get_contents('php://input')); // ❌ 
-    
-    $email = filter_var($input['email'] ?? '', FILTER_SANITIZE_EMAIL); 
-    $password = $input['password'] ?? '';
-    
-    if (!$email || $password = '') { 
+    $input = json_decode(file_get_contents('php://input'), true); 
+        //  Decodifica il body JSON come array associativo
+
+        
+    $email = filter_var($input['email'] ?? '', FILTER_VALIDATE_EMAIL); 
+    //  Verifica che l'email sia realmente valida
+    $password = $input['password'] ?? ''; 
+    //  Recupera la password se presente, altrimenti stringa vuota
+
+    if (!$email || empty($password)) { 
+        //  Se manca email o password → errore
         http_response_code(400);
-        echo json_encode(['message' => 'Email o password mancanti']);
+        echo json_encode(['message' => 'Email e password sono richiesti']);
         exit;
     }
     
