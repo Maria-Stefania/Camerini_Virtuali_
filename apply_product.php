@@ -119,8 +119,76 @@ function generateFittingImage($userPhotoFileName, $product, $config) {
             throw new Exception('Impossibile caricare l\'immagine utente');
         }
         
-        //
+        $userWidth = imagesx($userImage);
+        $userHeight = imagesy($userImage);
         
+    //  Cerco immagine prodotto nel colore selezionato
+        $productData = json_decode($product['colori'], true);
+        $productImageFile = null;
+
+        foreach ($productData as $colorData) {
+            if ($colorData['nome'] === $config['colore']) {
+                $productImageFile = $colorData['immagine'];
+                break;
+            }
+        }
+
+        // Se non esiste l’immagine del colore, uso quella frontale di default
+        if (!$productImageFile) {
+            $immagini = json_decode($product['immagini'], true);
+            $productImageFile = $immagini['frontale'];
+        }
+
+        //  Carico immagine del prodotto
+        $productImagePath = '../../uploads/products/' . $productImageFile;
+        $productImage = imagecreatefromstring(file_get_contents($productImagePath));
+        if (!$productImage) {
+            throw new Exception('Impossibile caricare l\'immagine prodotto');
+        }
+
+        //  Creo immagine di output (stesse dimensioni dell’utente)
+        $resultImage = imagecreatetruecolor($userWidth, $userHeight);
+
+        // Copio immagine utente nello sfondo
+        imagecopy($resultImage, $userImage, 0, 0, 0, 0, $userWidth, $userHeight);
+
+        //  Calcolo dimensioni e posizione del prodotto
+        $scale = $config['posizione']['scala'] ?? 1;
+        $productWidth = imagesx($productImage) * $scale;
+        $productHeight = imagesy($productImage) * $scale;
+
+        // Posizionamento relativo (in percentuale)
+        $x = ($config['posizione']['x'] / 100) * $userWidth - ($productWidth / 2);
+        $y = ($config['posizione']['y'] / 100) * $userHeight - ($productHeight / 2);
+
+        //  Ridimensiono prodotto se necessario
+        if ($scale !== 1) {
+            $resizedProduct = imagecreatetruecolor($productWidth, $productHeight);
+            imagecopyresampled(
+                $resizedProduct, $productImage,
+                0, 0, 0, 0,
+                $productWidth, $productHeight,
+                imagesx($productImage), imagesy($productImage)
+            );
+            $productImage = $resizedProduct;
+        }
+
+        //  Sovrappongo il prodotto all’immagine utente con trasparenza (80%)
+        imagecopymerge($resultImage, $productImage, $x, $y, 0, 0, $productWidth, $productHeight, 80);
+
+        //  Salvo il risultato come nuovo file PNG
+        $outputFileName = 'fitting_' . time() . '_' . rand(1000, 9999) . '.png';
+        $outputPath = '../../uploads/user-photos/' . $outputFileName;
+        imagepng($resultImage, $outputPath);
+
+        //  Libero memoria
+        imagedestroy($userImage);
+        imagedestroy($productImage);
+        imagedestroy($resultImage);
+
+        //  Ritorno solo il nome file
+        return $outputFileName;
+
     } catch (Exception $e) {
         error_log('Errore generazione immagine: ' . $e->getMessage());
         throw $e;
