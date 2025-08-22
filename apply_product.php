@@ -86,3 +86,21 @@ try {
     http_response_code(500);
     echo json_encode(['message' => 'Errore durante l\'applicazione del prodotto']);
 }
+
+function generateFittingImage($userPhotoFileName, $product, $config) {
+    try {
+        $userPhotoPath = '../../uploads/user-photos/' . $userPhotoFileName;
+        
+        $userImage = imagecreatefrompng($userPhotoPath); 
+        if (!$userImage) {
+            throw new Exception('Impossibile caricare l\'immagine utente');
+        }
+        
+        //
+        
+    } catch (Exception $e) {
+        error_log('Errore generazione immagine: ' . $e->getMessage());
+        throw $e;
+    }
+}
+?>
